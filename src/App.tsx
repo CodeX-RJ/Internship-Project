@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { DataTable, DataTablePageEvent } from 'primereact/datatable';
+import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { OverlayPanel } from 'primereact/overlaypanel';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
+import { InputNumber } from 'primereact/inputnumber';
+import type { DataTablePageEvent, InputNumberValueChangeEvent } from 'primereact'; // Use type-only import
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 
 // Define the Artwork interface
@@ -56,7 +57,7 @@ const App: React.FC = () => {
   };
 
   // Overlay button in table header
-  const overlayButton = useMemo<JSX.Element>(
+  const overlayButton = useMemo<React.JSX.Element>(
     () => <Button label="^" onClick={(e: React.MouseEvent<HTMLButtonElement>) => op.current?.toggle(e)} />,
     []
   );
