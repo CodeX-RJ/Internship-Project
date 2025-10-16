@@ -4,8 +4,8 @@ import { Column } from 'primereact/column';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import { Button } from 'primereact/button';
 import { OverlayPanel } from 'primereact/overlaypanel';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
-import { PaginatorPageState } from 'primereact/paginator';
+import { InputNumber } from 'primereact/inputnumber';
+import type { InputNumberValueChangeEvent } from 'primereact/inputnumber';
 
 interface Artwork {
   id: number;
@@ -17,6 +17,13 @@ interface Artwork {
   date_end: number;
 }
 
+interface PageEvent {
+  first: number;
+  rows: number;
+  page: number;
+  pageCount: number;
+}
+
 function App() {
   const [data1, setData1] = useState<Artwork[]>([]);
   const [pagination, setPagination] = useState<number>(1);
@@ -24,7 +31,6 @@ function App() {
   const [numRows, setNumRows] = useState<number>(0);
   const op = useRef<OverlayPanel | null>(null);
 
-  // Fetch data for current page
   useEffect(() => {
     fetch(`https://api.artic.edu/api/v1/artworks?page=${pagination}`)
       .then((res) => res.json())
@@ -32,7 +38,6 @@ function App() {
       .catch((err) => console.error(err));
   }, [pagination]);
 
-  // Handle selecting rows across pages
   const handleSelectRows = async () => {
     if (numRows <= 0) return;
 
@@ -46,7 +51,7 @@ function App() {
       const remaining = numRows - selectedIds.length;
       selectedIds.push(...ids.slice(0, remaining));
 
-      if ((data.data as Artwork[]).length === 0) break; // no more rows
+      if ((data.data as Artwork[]).length === 0) break;
       page++;
     }
 
@@ -54,7 +59,6 @@ function App() {
     op.current?.hide();
   };
 
-  // Overlay button in header
   const overlayButton = useMemo(
     () => <Button label="^" onClick={(e) => op.current?.toggle(e)} />,
     []
@@ -81,7 +85,7 @@ function App() {
         totalRecords={10824}
         lazy
         first={(pagination - 1) * 12}
-        onPage={(e: PaginatorPageState) => setPagination(e.page! + 1)}
+        onPage={(e: PageEvent) => setPagination(e.page + 1)}
         selection={data1.filter((row) => selectedRowIds.includes(row.id))}
         onSelectionChange={(e: { value: Artwork[] }) => {
           const newSelected = e.value.map((row) => row.id);
