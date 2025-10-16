@@ -4,20 +4,31 @@ import { Column } from 'primereact/column';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import { Button } from 'primereact/button';
 import { OverlayPanel } from 'primereact/overlaypanel';
-import { InputNumber } from 'primereact/inputnumber';
+import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
+import { PaginatorPageState } from 'primereact/paginator';
+
+interface Artwork {
+  id: number;
+  title: string;
+  place_of_origin: string;
+  artist_display: string;
+  inscriptions: string;
+  date_start: number;
+  date_end: number;
+}
 
 function App() {
-  const [data1, setData1] = useState([]);
-  const [pagination, setPagination] = useState(1);
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [numRows, setNumRows] = useState(0);
-  const op = useRef(null);
+  const [data1, setData1] = useState<Artwork[]>([]);
+  const [pagination, setPagination] = useState<number>(1);
+  const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
+  const [numRows, setNumRows] = useState<number>(0);
+  const op = useRef<OverlayPanel | null>(null);
 
   // Fetch data for current page
   useEffect(() => {
     fetch(`https://api.artic.edu/api/v1/artworks?page=${pagination}`)
       .then((res) => res.json())
-      .then((data) => setData1(data.data))
+      .then((data) => setData1(data.data as Artwork[]))
       .catch((err) => console.error(err));
   }, [pagination]);
 
@@ -31,22 +42,21 @@ function App() {
     while (selectedIds.length < numRows) {
       const response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page}`);
       const data = await response.json();
-
-      const ids = data.data.map((row) => row.id);
+      const ids = (data.data as Artwork[]).map((row) => row.id);
       const remaining = numRows - selectedIds.length;
       selectedIds.push(...ids.slice(0, remaining));
 
-      if (data.data.length === 0) break; // no more rows
+      if ((data.data as Artwork[]).length === 0) break; // no more rows
       page++;
     }
 
     setSelectedRowIds(selectedIds);
-    op.current.hide();
+    op.current?.hide();
   };
 
   // Overlay button in header
   const overlayButton = useMemo(
-    () => <Button label="^" onClick={(e) => op.current.toggle(e)} />,
+    () => <Button label="^" onClick={(e) => op.current?.toggle(e)} />,
     []
   );
 
@@ -55,7 +65,11 @@ function App() {
       <OverlayPanel ref={op} showCloseIcon id="overlay_panel" dismissable>
         <div className="flex flex-col gap-2">
           <span>Enter number of rows to select:</span>
-          <InputNumber value={numRows} onValueChange={(e) => setNumRows(e.value)} min={0} />
+          <InputNumber
+            value={numRows}
+            onValueChange={(e: InputNumberValueChangeEvent) => setNumRows(e.value || 0)}
+            min={0}
+          />
           <Button label="Select Rows" onClick={handleSelectRows} />
         </div>
       </OverlayPanel>
@@ -67,11 +81,10 @@ function App() {
         totalRecords={10824}
         lazy
         first={(pagination - 1) * 12}
-        onPage={(e) => setPagination(e.page + 1)}
+        onPage={(e: PaginatorPageState) => setPagination(e.page! + 1)}
         selection={data1.filter((row) => selectedRowIds.includes(row.id))}
-        onSelectionChange={(e) => {
+        onSelectionChange={(e: { value: Artwork[] }) => {
           const newSelected = e.value.map((row) => row.id);
-          // merge with previous selection, removing deselected rows
           const updatedIds = selectedRowIds.filter((id) => !data1.some((r) => r.id === id));
           setSelectedRowIds([...updatedIds, ...newSelected]);
         }}
