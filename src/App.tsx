@@ -6,6 +6,7 @@ import { OverlayPanel } from 'primereact/overlaypanel';
 import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 
+// Define the Artwork interface
 interface Artwork {
   id: number;
   title: string;
@@ -16,7 +17,7 @@ interface Artwork {
   date_end: number;
 }
 
-function App() {
+const App: React.FC = () => {
   const [data1, setData1] = useState<Artwork[]>([]);
   const [pagination, setPagination] = useState<number>(1);
   const [selectedRowIds, setSelectedRowIds] = useState<number[]>([]);
@@ -26,24 +27,24 @@ function App() {
   // Fetch data for current page
   useEffect(() => {
     fetch(`https://api.artic.edu/api/v1/artworks?page=${pagination}`)
-      .then((res) => res.json())
-      .then((data) => setData1(data.data))
-      .catch((err) => console.error(err));
+      .then((res: Response) => res.json())
+      .then((data: { data: Artwork[] }) => setData1(data.data))
+      .catch((err: Error) => console.error(err));
   }, [pagination]);
 
   // Handle selecting rows across multiple pages
-  const handleSelectRows = async () => {
+  const handleSelectRows = async (): Promise<void> => {
     if (numRows <= 0) return;
 
-    let selectedIds = [...selectedRowIds];
-    let page = 1;
+    let selectedIds: number[] = [...selectedRowIds];
+    let page: number = 1;
 
     while (selectedIds.length < numRows) {
-      const response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page}`);
-      const data = await response.json();
+      const response: Response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page}`);
+      const data: { data: Artwork[] } = await response.json();
 
-      const ids = data.data.map((row: Artwork) => row.id);
-      const remaining = numRows - selectedIds.length;
+      const ids: number[] = data.data.map((row: Artwork) => row.id);
+      const remaining: number = numRows - selectedIds.length;
       selectedIds.push(...ids.slice(0, remaining));
 
       if (data.data.length === 0) break; // No more rows
@@ -55,8 +56,8 @@ function App() {
   };
 
   // Overlay button in table header
-  const overlayButton = useMemo(
-    () => <Button label="^" onClick={(e) => op.current?.toggle(e)} />,
+  const overlayButton = useMemo<JSX.Element>(
+    () => <Button label="^" onClick={(e: React.MouseEvent<HTMLButtonElement>) => op.current?.toggle(e)} />,
     []
   );
 
@@ -86,11 +87,11 @@ function App() {
         onPage={(e: DataTablePageEvent) => {
           if (e.page !== undefined) setPagination(e.page + 1);
         }}
-        selection={data1.filter((row) => selectedRowIds.includes(row.id))}
+        selection={data1.filter((row: Artwork) => selectedRowIds.includes(row.id))}
         onSelectionChange={(e: { value: Artwork[] }) => {
-          const newSelected = e.value.map((row) => row.id);
+          const newSelected: number[] = e.value.map((row: Artwork) => row.id);
           // Keep previous selections from other pages
-          const updatedIds = selectedRowIds.filter((id) => !data1.some((r) => r.id === id));
+          const updatedIds: number[] = selectedRowIds.filter((id: number) => !data1.some((r: Artwork) => r.id === id));
           setSelectedRowIds([...updatedIds, ...newSelected]);
         }}
         dataKey="id"
@@ -107,6 +108,6 @@ function App() {
       </DataTable>
     </div>
   );
-}
+};
 
 export default App;
